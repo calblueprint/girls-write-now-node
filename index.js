@@ -11,7 +11,7 @@ const genreMediumRoute = 'https://girlswritenow.org/wp-json/wp/v2/genre-medium/\
 //port all data from word press to supabase --> getAllCollections --> clean up data --> push to supabase (reference query syntax)
 //will talk about schema during the meeting 
 
-const getAllCollections = async () => {
+ const getAllCollections = async () => {
   try {
     const response = await fetch(collectionsRoute);
     const responseJson = await response.json();
@@ -47,7 +47,7 @@ const getAllStories = async () => {
     }
   };
 
-  const getAllAuthors = async () => {
+   const getAllAuthors = async () => {
     try {
       const response = await fetch(authorRoute);
       const responseJson = await response.json();
@@ -74,7 +74,7 @@ const getAllStories = async () => {
 
 //https://javascript.plainenglish.io/how-to-remove-objects-from-a-javascript-array-by-object-property-4c3da1b8393b#:~:text=We%20can%20use%20the%20JavaScript,the%20index%20returned%20by%20findIndex%20.
 
-function removeElementsByIndexes(arr, indexes) {
+export function removeElementsByIndexes(arr, indexes) {
     // Sort the indexes in descending order to prevent issues when removing elements
     indexes.sort((a, b) => b - a);
   
@@ -122,9 +122,9 @@ const filterStories = async () => {
   
 filterStories();
 
-//supabase backend object looks like:
-//{id:, date:, title:, content:, process:, excerpt:, featured_media:, link:  }
-// const { error } = await supabase
-//   .from('stories')
-//   .insert({ id: 1, title: 'Denmark', content: adfasdfasd, process: adfadsf, excerpt: adfasdf, featured_media:aadsfafda, link:asdfasdfads })
+export {
+    filterStories, getAllAuthors, getAllCollections, getAllStories, getAllTopics, removeElementsByIndexes
+};
+
+
 
