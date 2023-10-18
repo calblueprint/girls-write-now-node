@@ -35,6 +35,7 @@ const getAllStories = async () => {
     }
   };
 
+
   const getAllTopics = async () => {
     try {
       const response = await fetch(topicRoute);
@@ -87,15 +88,15 @@ export function removeElementsByIndexes(arr, indexes) {
   }
 
 //function will filter out non-text story objects
-const filterStories = async () => {
+const filterStories = async (storyObject) => {
     const genreMediumDict = {};
-    const unfilteredData = await getAllStories();
+    // const unfilteredData = await getAllStories();
     const genreMediumResponse = await getAllGenreMediums();
     genreMediumResponse.map((obj) => {
         genreMediumDict[obj.id] = obj.name;
     });
     const indexList = [];
-    unfilteredData.forEach((obj, index) => {
+    storyObject.forEach((obj, index) => {
         if (obj["genre-medium"].includes(383) ||
             obj["genre-medium"].includes(405)|| 
             obj["genre-medium"].includes(414) ||
@@ -113,17 +114,14 @@ const filterStories = async () => {
                 indexList.push(index);
             }
     })
-    const filteredData = removeElementsByIndexes(unfilteredData, indexList);
-    console.log(filteredData);
+    const filteredData = removeElementsByIndexes(storyObject, indexList);
     return filteredData;
   }
 
 
-  
-filterStories();
 
 export {
-    filterStories, getAllAuthors, getAllCollections, getAllStories, getAllTopics, removeElementsByIndexes
+    filterStories, getAllStories
 };
 
 
