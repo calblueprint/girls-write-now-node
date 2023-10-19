@@ -14,13 +14,13 @@ async function insertStoryData() {
     storyData.forEach(async obj => {
         const { data, error } = await supabase
         .from('stories')
-        .insert([
+        .upsert([
         { 
             id: obj.id,
             date: obj.date, 
             title: obj.title.rendered, 
             content: obj.content.rendered, //need to push content through html parser 
-             process: obj.content.rendered, //need to extract process content from content after its parsed 
+            process: obj.content.rendered, //need to extract process content from content after its parsed 
             excerpt: obj.excerpt.rendered,
             featured_media: obj.featured_media  //featured media is currently just an ID, need to extract links somehow
         },
