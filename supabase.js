@@ -10,7 +10,28 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function createStoryObject() {
     const unfilteredStoryData = await getAllStories();
     const storyData = await filterStories(unfilteredStoryData);
+<<<<<<< HEAD
     return storyData;
+=======
+    console.log(storyData);
+    storyData.forEach(async obj => {
+        const { data, error } = await supabase
+        .from('stories')
+        .upsert([
+        { 
+            id: obj.id,
+            date: obj.date, 
+            title: obj.title.rendered, 
+            content: obj.content.rendered, //need to push content through html parser 
+            process: obj.content.rendered, //need to extract process content from content after its parsed 
+            excerpt: obj.excerpt.rendered,
+            featured_media: obj.featured_media  //featured media is currently just an ID, need to extract links somehow
+        },
+        ])
+
+    })
+
+>>>>>>> 14abb081fd599e6b6ef962f5726a151c0fba01a5
 }
 
 async function insertStoryData() {
