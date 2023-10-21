@@ -15,6 +15,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.38.1",
     "dotenv": "^16.3.1",
+    "html-entities": "^2.4.0",
     "node-fetch": "^3.3.2"
   }
 }

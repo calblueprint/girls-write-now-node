@@ -1,4 +1,5 @@
 // Code goes here!
+import { decode } from 'html-entities';
 import fetch from 'node-fetch';
 
 const collectionsRoute = 'https://girlswritenow.org/wp-json/wp/v2/collection';
@@ -15,7 +16,7 @@ const genreMediumRoute = 'https://girlswritenow.org/wp-json/wp/v2/genre-medium/\
   try {
     const response = await fetch(collectionsRoute);
     const responseJson = await response.json();
-    console.log(responseJson);
+    // console.log(responseJson);
     return responseJson;
   } catch (error) {
     console.log('Error');
@@ -40,7 +41,7 @@ const getAllStories = async () => {
     try {
       const response = await fetch(topicRoute);
       const responseJson = await response.json();
-      console.log(responseJson);
+      // console.log(responseJson);
       return responseJson;
     } catch (error) {
       console.log('Error');
@@ -52,7 +53,7 @@ const getAllStories = async () => {
     try {
       const response = await fetch(authorRoute);
       const responseJson = await response.json();
-      console.log(responseJson);
+      // console.log(responseJson);
       return responseJson;
     } catch (error) {
       console.log('Error');
@@ -118,10 +119,54 @@ const filterStories = async (storyObject) => {
     return filteredData;
   }
 
+  const getFeaturedMedia = async (featuredmediaId) => {
+    const featuredMediaLink = 'https://girlswritenow.org/wp-json/wp/v2/media/' + `${featuredmediaId}`;
+    const response = await fetch(featuredMediaLink);
+    const responseJson = await response.json();
+    return responseJson.link;
+
+  }
+  //returns link from featuredMedia endpoint query (usually an image or jpeg)
+
+
+  function htmlParser(htmlString, htmlExcerpt) {
+    const regexHeading = /(<h2(.*?)h2>)/;
+    const regexStory = /(\n+<p(.*?)p>)+/;
+    const regexProcess = /<p>&nbsp(.*?)p>/;
+    const regexExcerpt = /<p>(.*?)<\/p>/;
+  
+    const heading = regexHeading.exec(htmlString);
+    const story = regexStory.exec(htmlString);
+    const process = regexProcess.exec(htmlString);
+    const excerpt = regexExcerpt.exec(htmlExcerpt);
+  
+    const contentHeading = heading
+      ? decode(heading[0])
+      : '';
+
+    const contentStory = story
+      ? decode(story[0])
+      : '';
+    const contentProcess = process
+      ? decode(process[0])
+      : '';
+    const contentExcerpt = excerpt
+      ? decode(excerpt[0])
+      : '';
+    return {
+      heading: contentHeading,
+      story: contentStory,
+      process: contentProcess,
+      excerpt: contentExcerpt
+    };
+  }
+
+
+
 
 
 export {
-    filterStories, getAllStories
+  filterStories, getAllStories, getFeaturedMedia, htmlParser
 };
 
 
