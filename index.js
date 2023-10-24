@@ -12,18 +12,6 @@ const genreMediumRoute = 'https://girlswritenow.org/wp-json/wp/v2/genre-medium/\
 //port all data from word press to supabase --> getAllCollections --> clean up data --> push to supabase (reference query syntax)
 //will talk about schema during the meeting 
 
- const getAllCollections = async () => {
-  try {
-    const response = await fetch(collectionsRoute);
-    const responseJson = await response.json();
-    // console.log(responseJson);
-    return responseJson;
-  } catch (error) {
-    console.log('Error');
-    throw error;
-  }
-};
-
 const getAllStories = async () => {
     try {
       const response = await fetch(storyRoute);
@@ -36,22 +24,23 @@ const getAllStories = async () => {
     }
   };
 
+  async function returnStoryId() {
+    const idArray = [];
+    const unfilteredStoryData = await getAllStories();
+    const storyData = await filterStories(unfilteredStoryData);
+    storyData.forEach(obj => {
+      idArray.push(obj.id);
+    })
+    return idArray;
+    
+
+}
+
+returnStoryId();
 
   const getAllTopics = async () => {
     try {
       const response = await fetch(topicRoute);
-      const responseJson = await response.json();
-      // console.log(responseJson);
-      return responseJson;
-    } catch (error) {
-      console.log('Error');
-      throw error;
-    }
-  };
-
-   const getAllAuthors = async () => {
-    try {
-      const response = await fetch(authorRoute);
       const responseJson = await response.json();
       // console.log(responseJson);
       return responseJson;
@@ -74,12 +63,12 @@ const getAllStories = async () => {
   }; 
 
 
+
 //https://javascript.plainenglish.io/how-to-remove-objects-from-a-javascript-array-by-object-property-4c3da1b8393b#:~:text=We%20can%20use%20the%20JavaScript,the%20index%20returned%20by%20findIndex%20.
 
 export function removeElementsByIndexes(arr, indexes) {
     // Sort the indexes in descending order to prevent issues when removing elements
     indexes.sort((a, b) => b - a);
-  
     for (const index of indexes) {
       if (index >= 0 && index < arr.length) {
         arr.splice(index, 1);
@@ -142,16 +131,25 @@ const filterStories = async (storyObject) => {
   
     const contentHeading = heading
       ? decode(heading[0])
+      .replace('</h2>', '')
+      .replace(/<h2.+>/, '')
       : '';
 
     const contentStory = story
       ? decode(story[0])
+      .replace(/(\n)+/gi, '')
+      .replace(/<p>/gi, '')
+      .replace(/<\/p>/gi, '\n\n')
       : '';
     const contentProcess = process
       ? decode(process[0])
+      .replace(/<p>/gi, '')
+      .replace(/<\/p>/gi, '')
       : '';
     const contentExcerpt = excerpt
       ? decode(excerpt[0])
+      .replace(/<p>/gi, '')
+      .replace(/<\/p>/gi, '')
       : '';
     return {
       heading: contentHeading,
@@ -163,10 +161,8 @@ const filterStories = async (storyObject) => {
 
 
 
-
-
 export {
-  filterStories, getAllStories, getFeaturedMedia, htmlParser
+  filterStories, getAllStories, getFeaturedMedia, htmlParser, returnStoryId
 };
 
 
