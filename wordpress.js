@@ -2,21 +2,15 @@
 import { decode } from 'html-entities';
 import fetch from 'node-fetch';
 
-const collectionsRoute = 'https://girlswritenow.org/wp-json/wp/v2/collection';
-const storyRoute = 'https://girlswritenow.org/wp-json/wp/v2/story/';
-const topicRoute = 'https://girlswritenow.org/wp-json/wp/v2/topic';
-const authorRoute = 'https://girlswritenow.org/wp-json/wp/v2/coauthors';
-const genreMediumRoute = 'https://girlswritenow.org/wp-json/wp/v2/genre-medium/\?per_page=100';
+const storyRoute = 'https://girlswritenow.org/wp-json/wp/v2/story/\?per_page=20';
+const genreMediumRoute = 'https://girlswritenow.org/wp-json/wp/v2/genre-medium/';
 
 
-//port all data from word press to supabase --> getAllCollections --> clean up data --> push to supabase (reference query syntax)
-//will talk about schema during the meeting 
-
+//function fetches story object from wordpress story endpoint
 const getAllStories = async () => {
     try {
       const response = await fetch(storyRoute);
       const responseJson = await response.json();
-    //   console.log(responseJson);
       return responseJson;
     } catch (error) {
       console.log('Error');
@@ -24,32 +18,7 @@ const getAllStories = async () => {
     }
   };
 
-  async function returnStoryId() {
-    const idArray = [];
-    const unfilteredStoryData = await getAllStories();
-    const storyData = await filterStories(unfilteredStoryData);
-    storyData.forEach(obj => {
-      idArray.push(obj.id);
-    })
-    return idArray;
-    
-
-}
-
-returnStoryId();
-
-  const getAllTopics = async () => {
-    try {
-      const response = await fetch(topicRoute);
-      const responseJson = await response.json();
-      // console.log(responseJson);
-      return responseJson;
-    } catch (error) {
-      console.log('Error');
-      throw error;
-    }
-  };
-
+  //function fetches genre medium object from wordpress genreMedium endpoint
   const getAllGenreMediums = async () => {
     try {
       const response = await fetch(genreMediumRoute);
@@ -63,9 +32,7 @@ returnStoryId();
   }; 
 
 
-
-//https://javascript.plainenglish.io/how-to-remove-objects-from-a-javascript-array-by-object-property-4c3da1b8393b#:~:text=We%20can%20use%20the%20JavaScript,the%20index%20returned%20by%20findIndex%20.
-
+//this function removes specific story objects after being passed in an array of indexes
 export function removeElementsByIndexes(arr, indexes) {
     // Sort the indexes in descending order to prevent issues when removing elements
     indexes.sort((a, b) => b - a);
@@ -79,35 +46,26 @@ export function removeElementsByIndexes(arr, indexes) {
 
 //function will filter out non-text story objects
 const filterStories = async (storyObject) => {
-    const genreMediumDict = {};
-    // const unfilteredData = await getAllStories();
+  const genreMediumDict = {};
     const genreMediumResponse = await getAllGenreMediums();
     genreMediumResponse.map((obj) => {
         genreMediumDict[obj.id] = obj.name;
     });
+    const idArray = [344, 383, 405, 414, 416, 470, 478, 503, 564, 568, 635, 712, 1202, 1205, 1216, 1315, 1350, 1351, 1771, 1804, 1885, 2437, 2438];
     const indexList = [];
-    storyObject.forEach((obj, index) => {
-        if (obj["genre-medium"].includes(383) ||
-            obj["genre-medium"].includes(405)|| 
-            obj["genre-medium"].includes(414) ||
-            obj["genre-medium"].includes(470) ||
-            obj["genre-medium"].includes(478) ||
-            obj["genre-medium"].includes(503) ||
-            obj["genre-medium"].includes(568) ||
-            obj["genre-medium"].includes(712) ||
-            obj["genre-medium"].includes(635) ||
-            obj["genre-medium"].includes(1202) ||
-            obj["genre-medium"].includes(1216) ||
-            obj["genre-medium"].includes(1315) ||
-            obj["genre-medium"].includes(1885) ||
-            obj["genre-medium"].includes(2437)) {
-                indexList.push(index);
-            }
-    })
+    for (const id of idArray) {
+      storyObject.forEach((obj, index) => {
+        if( obj["genre-medium"].includes(id)) {
+          indexList.push(index);
+        }
+      })
+    }
+    console.log(indexList);
     const filteredData = removeElementsByIndexes(storyObject, indexList);
     return filteredData;
   }
 
+  //function will return featured media link associated with each story (usually an image/jpeg)
   const getFeaturedMedia = async (featuredmediaId) => {
     const featuredMediaLink = 'https://girlswritenow.org/wp-json/wp/v2/media/' + `${featuredmediaId}`;
     const response = await fetch(featuredMediaLink);
@@ -115,9 +73,8 @@ const filterStories = async (storyObject) => {
     return responseJson.link;
 
   }
-  //returns link from featuredMedia endpoint query (usually an image or jpeg)
 
-
+  //function will apply regex functions to storyObject outputs such as process, story, heading, etc. 
   function htmlParser(htmlString, htmlExcerpt) {
     const regexHeading = /(<h2(.*?)h2>)/;
     const regexStory = /(\n+<p(.*?)p>)+/;
@@ -160,10 +117,16 @@ const filterStories = async (storyObject) => {
   }
 
 
+  //this function creates a story Object after running it through filterStories() and removing non-text related stories
+  async function createStoryObjects() {
+    const unfilteredStoryDataObject = await getAllStories();
+    const storyData = await filterStories(unfilteredStoryDataObject);
+    return storyData;
+}
 
-export {
-  filterStories, getAllStories, getFeaturedMedia, htmlParser, returnStoryId
-};
+export { createStoryObjects, getFeaturedMedia, htmlParser };
+
+
 
 
 
