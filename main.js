@@ -1,4 +1,26 @@
-import { insertStoryData } from './supabase.js';
+import {
+	insertAuthors,
+	insertCollectionsStories,
+	insertStories,
+	insertStoriesTags,
+} from "./supabase.js";
+import { createStoryObjects } from "./wordpress.js";
 
-//run insertStoryData() to push all information to supabase
-insertStoryData();
+async function insertAllStoryData() {
+	let storyObjects;
+	try {
+		storyObjects = await createStoryObjects();
+	} catch (error) {
+		console.log(`Unable to get all stories: ${error}`);
+		return;
+	} finally {
+		storyObjects.forEach(async (obj) => {
+			await insertStories(obj);
+			await insertStoriesTags(obj);
+			await insertCollectionsStories(obj);
+			await insertAuthors(obj);
+		});
+	}
+}
+
+insertAllStoryData();
