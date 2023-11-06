@@ -3,6 +3,7 @@ import "dotenv/config.js";
 import { decode } from "html-entities";
 import { getAuthor, getFeaturedMedia, htmlParser } from "./wordpress.js";
 
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -12,19 +13,20 @@ async function insertStories(storyObject) {
 	try {
 		const htmlParsedObject = htmlParser(
 			storyObject.content.rendered,
-			storyObject.excerpt.rendered
 		);
+        console.log("HTMLPARSEDOBJECT:", htmlParsedObject);
 		const featuredMediaLink = await getFeaturedMedia(
 			storyObject.featured_media
 		);
 		const { error } = await supabase.from("stories").upsert([
+		
 			{
 				id: storyObject.id,
 				date: storyObject.date,
 				title: decode(storyObject.title.rendered),
-				content: htmlParsedObject.story,
+				content: {html: htmlParsedObject.content}, //pushing type json to supabase 
 				process: htmlParsedObject.process,
-				excerpt: htmlParsedObject.excerpt,
+				excerpt: storyObject.excerpt.rendered,
 				featured_media: featuredMediaLink,
 				link: storyObject.link,
 			},

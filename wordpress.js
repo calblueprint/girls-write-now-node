@@ -2,7 +2,7 @@ import { decode } from "html-entities";
 import fetch from "node-fetch";
 
 const allStoriesRoute =
-	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=20";
+	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10&page=10";
 const genreMediumRoute =
 	"https://girlswritenow.org/wp-json/wp/v2/genre-medium/";
 const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
@@ -79,22 +79,27 @@ const getFeaturedMedia = async (featuredmediaId) => {
 };
 
 /* Parse storyObject content into Heading, Story, Process, and Excerpt. */
-function htmlParser(htmlString, htmlExcerpt) {
-	const regexHeading = /(<h2(.*?)h2>)/;
-	const regexStory = /(\n+<p(.*?)p>)+/;
-	const regexProcess = /<p>&nbsp(.*?)p>/;
-	const regexExcerpt = /<p>(.*?)<\/p>/;
+function htmlParser(htmlString) {
+	// const regexHeading = /(<h2(.*?)h2>)/;
+	console.log(htmlString);
+	// const regexStory = /<\/h2>\n*(.*)\n*Process/;
+	// '<\/h2>\n*(.*)\n*Process'
+	const regexStoryTest = RegExp('section*');
+	const regexProcessTest = RegExp('(Process(.*)clickable-area)');
+	// const regexProcess = /(Process(.*)clickable-area)/;
 
-	const heading = regexHeading.exec(htmlString);
-	const story = regexStory.exec(htmlString);
-	const process = regexProcess.exec(htmlString);
-	const excerpt = regexExcerpt.exec(htmlExcerpt);
 
-	const contentHeading = heading
-		? decode(heading[0])
-				.replace("</h2>", "")
-				.replace(/<h2.+>/, "")
-		: "";
+	// const heading = regexHeading.exec(htmlString);
+	const story = regexStoryTest.exec(htmlString);
+	const process = regexProcessTest.exec(htmlString);
+	console.log("story and process before replacement:", story, process)
+	// const excerpt = regexExcerpt.exec(htmlExcerpt);
+
+	// const contentHeading = heading
+	// 	? decode(heading[0])
+	// 			// .replace("</h2>", "")
+	// 			// .replace(/<h2.+>/, "")
+	// 	: "";
 
 	const contentStory = story
 		? decode(story[0])
@@ -103,16 +108,23 @@ function htmlParser(htmlString, htmlExcerpt) {
 				.replace(/<\/p>/gi, "\n\n")
 		: "";
 	const contentProcess = process
-		? decode(process[0]).replace(/<p>/gi, "").replace(/<\/p>/gi, "")
+		? decode(process[0])
+		.replace(/<p>/gi, "")
+		.replace(/<\/p>/gi, "")
 		: "";
-	const contentExcerpt = excerpt
-		? decode(excerpt[0]).replace(/<p>/gi, "").replace(/<\/p>/gi, "")
-		: "";
+
+
+		console.log("Process and Story Object:", story, process)
+	// const contentExcerpt = excerpt
+	// 	? decode(excerpt[0])
+		// .replace(/<p>/gi, "")
+		// .replace(/<\/p>/gi, "")
+		// : "";
 	return {
-		heading: contentHeading,
+		// heading: contentHeading,
 		story: contentStory,
 		process: contentProcess,
-		excerpt: contentExcerpt,
+		// excerpt: contentExcerpt,
 	};
 }
 
@@ -160,4 +172,8 @@ async function getAuthor(storyObject) {
 	}
 }
 
+getAllStories();
+
 export { createStoryObjects, getAuthor, getFeaturedMedia, htmlParser };
+
+
