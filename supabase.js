@@ -22,16 +22,16 @@ async function insertStories(storyObject) {
 				id: storyObject.id,
 				date: storyObject.date,
 				title: decode(storyObject.title.rendered),
-				content: htmlParsedObject.story,
-				process: htmlParsedObject.process,
-				excerpt: htmlParsedObject.excerpt,
+				content: { html: htmlParsedObject.story },
+				process: { html: htmlParsedObject.process },
+				excerpt: { html: htmlParsedObject.excerpt },
 				featured_media: featuredMediaLink,
 				link: storyObject.link,
 			},
 		]);
 		if (error) {
 			console.log(
-				`Unable to push story ${storyObject.id} to Supabase: ${error}`
+				`Unable to push story ${storyObject.id} to Supabase: ${error.code}`
 			);
 		} else {
 			console.log(`Inserted story ${storyObject.id} to Supabase`);
@@ -78,10 +78,10 @@ async function insertAuthors(storyObject) {
 			pronouns: authorObject.pronouns,
 			bio: authorObject.bio,
 			artist_statement: authorObject.artist_statement,
-			thumbnail: authorObject.thumbnail,
+			image: authorObject.thumbnail,
 		});
 		if (error) {
-			console.log(`Unable to insert author ${authorObject.id}: ${error}`);
+			console.log(`Unable to insert author ${authorObject.id}: ${error.code}`);
 		}
 		await insertStoriesAuthors(storyObject.id, authorObject.id);
 		console.log(`Inserted author ${authorObject.id}`);

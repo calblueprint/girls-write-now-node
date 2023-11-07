@@ -2,7 +2,7 @@ import { decode } from "html-entities";
 import fetch from "node-fetch";
 
 const allStoriesRoute =
-	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=20";
+	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10";
 const genreMediumRoute =
 	"https://girlswritenow.org/wp-json/wp/v2/genre-medium/";
 const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
