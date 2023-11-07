@@ -23,8 +23,8 @@ async function insertStories(storyObject) {
 				date: storyObject.date,
 				title: decode(storyObject.title.rendered),
 				content: { html: htmlParsedObject.story },
-				process: { html: htmlParsedObject.process },
-				excerpt: { html: htmlParsedObject.excerpt },
+				process: { html: htmlParsedObject.process},
+				excerpt: { html: htmlParsedObject.excerpt},
 				featured_media: featuredMediaLink,
 				link: storyObject.link,
 			},
@@ -104,8 +104,9 @@ async function insertStoriesAuthors(storyID, authorID) {
 }
 
 export {
-	insertAuthors,
-	insertCollectionsStories,
-	insertStories,
-	insertStoriesTags,
+    insertAuthors,
+    insertCollectionsStories,
+    insertStories,
+    insertStoriesTags
 };
+
