@@ -2,7 +2,7 @@ import { decode } from "html-entities";
 import fetch from "node-fetch";
 
 const allStoriesRoute =
-	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=20";
+	"https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10";
 const genreMediumRoute =
 	"https://girlswritenow.org/wp-json/wp/v2/genre-medium/";
 const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
@@ -80,36 +80,23 @@ const getFeaturedMedia = async (featuredmediaId) => {
 
 /* Parse storyObject content into Heading, Story, Process, and Excerpt. */
 function htmlParser(htmlString, htmlExcerpt) {
-	const regexHeading = /(<h2(.*?)h2>)/;
-	const regexStory = /(\n+<p(.*?)p>)+/;
-	const regexProcess = /<p>&nbsp(.*?)p>/;
-	const regexExcerpt = /<p>(.*?)<\/p>/;
+	const regexStory =
+		/<h2 class="wp-block-heading">.*?<\/h2>[\n\r]*((.|\n|\r)*?)<div/;
+	const regexProcess = /Process.*?[\r\n]*?((<p>.*?<\/p>))/;
+	const regexExcerpt = /(<p>.*?<\/p>)/;
 
-	const heading = regexHeading.exec(htmlString);
-	const story = regexStory.exec(htmlString);
+	// const story = regexStory.match(htmlString);
+	const story = htmlString.match(regexStory);
 	const process = regexProcess.exec(htmlString);
 	const excerpt = regexExcerpt.exec(htmlExcerpt);
 
-	const contentHeading = heading
-		? decode(heading[0])
-				.replace("</h2>", "")
-				.replace(/<h2.+>/, "")
-		: "";
+	const contentStory = story ? decode(story[1]) : "";
+	const contentProcess = process ? decode(process[1]) : "";
+	const contentExcerpt = excerpt ? decode(excerpt[1]) : "";
 
-	const contentStory = story
-		? decode(story[0])
-				.replace(/(\n)+/gi, "")
-				.replace(/<p>/gi, "")
-				.replace(/<\/p>/gi, "\n\n")
-		: "";
-	const contentProcess = process
-		? decode(process[0]).replace(/<p>/gi, "").replace(/<\/p>/gi, "")
-		: "";
-	const contentExcerpt = excerpt
-		? decode(excerpt[0]).replace(/<p>/gi, "").replace(/<\/p>/gi, "")
-		: "";
+	console.log(htmlString);
+
 	return {
-		heading: contentHeading,
 		story: contentStory,
 		process: contentProcess,
 		excerpt: contentExcerpt,
