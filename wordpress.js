@@ -79,24 +79,22 @@ const getFeaturedMedia = async (featuredmediaId) => {
 };
 
 /* Parse storyObject content into Heading, Story, Process, and Excerpt. */
+
 function htmlParser(htmlString, htmlExcerpt) {
 	const regexStory =
-		/<h2 class="wp-block-heading">.*?<\/h2>[\n\r]*((.|\n|\r)*?)<div/;
+		/<h2 class="wp-block-heading">.*?<\/h2>[\n\r]*((.|\n|\r)*?).*?(?=(<div style="color:#ddd" class="wp-block-genesis-blocks-gb-spacer gb-block-spacer gb-divider-solid gb-spacer-divider gb-divider-size-1">|<h1 class="wp-block-heading has-text-align-center">))/;
 	const regexProcess = /Process.*?[\r\n]*?((<p>.*?<\/p>))/;
-	const regexExcerpt = /(<p>.*?<\/p>)/;
+	const regexExcerpt = /(<p>(.|\n|\r)*?<\/p>)/;
 
-	// const story = regexStory.match(htmlString);
 	const story = htmlString.match(regexStory);
 	const process = regexProcess.exec(htmlString);
 	const excerpt = regexExcerpt.exec(htmlExcerpt);
 
-	const contentStory = story ? decode(story[1]) : "";
+	const contentStory = story ? decode(story[1].replace(/^\s*|\s*$/g, "")) : "";
 	const contentProcess = process ? decode(process[1]) : "";
 	const contentExcerpt = excerpt ? decode(excerpt[1]) : "";
 
-	console.log(htmlString);
-
-	return {
+  return {
 		story: contentStory,
 		process: contentProcess,
 		excerpt: contentExcerpt,
