@@ -99,7 +99,7 @@ function htmlParser(htmlString, htmlExcerpt) {
 /* Create storyObject from raw WP story response. For loop to use offset parameters to avoid JSON errors */
 async function createStoryObjects() {
 	let returnObject = [];
-	for(let i = 100; i < 201; i+= 10 ){
+	for(let i = 0; i < 201; i+= 10 ){
 		const unfilteredStoryObjects = await getAllStories(i);
 		const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
 		returnObject = returnObject.concat(filteredStoryObjects);
