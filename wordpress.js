@@ -105,6 +105,7 @@ async function createStoryObjects() {
 		returnObject = returnObject.concat(filteredStoryObjects);
 	}
 	console.log("testing array length:", returnObject.length);
+	console.log("TESTING STORY OUTPUT:", returnObject[70]);
 	return returnObject;
 }
 

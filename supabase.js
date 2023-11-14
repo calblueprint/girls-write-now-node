@@ -14,6 +14,7 @@ async function insertStories(storyObject) {
 			storyObject.content.rendered,
 			storyObject.excerpt.rendered
 		);
+		console.log("HTML PARSED OBJECT:", htmlParsedObject )
 		const featuredMediaLink = await getFeaturedMedia(
 			storyObject.featured_media
 		);
@@ -104,9 +105,9 @@ async function insertStoriesAuthors(storyID, authorID) {
 }
 
 export {
-    insertAuthors,
-    insertCollectionsStories,
-    insertStories,
-    insertStoriesTags
+	insertAuthors,
+	insertCollectionsStories,
+	insertStories,
+	insertStoriesTags
 };
 
