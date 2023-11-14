@@ -19,8 +19,8 @@ headers.set(
 );
 
 /* Fetch all story objects from WP story endpoint. */
-const getAllStories = async () => {
-	const response = await fetch(allStoriesRoute);
+const getAllStories = async (offsetParam) => {
+	const response = await fetch(`https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10&offset=${offsetParam}&orderby=date`);
 	const responseJson = await response.json();
 	return responseJson;
 };
@@ -46,12 +46,7 @@ export function removeElementsByIndexes(arr, indexes) {
 
 /* Filter story objects to be only text-based stories. */
 const filterStories = async (storyObjects) => {
-	// Use to manually update nonTextGenres if needed
-	// const genreMediumDict = {};
-	// const genreMediumResponse = await getAllGenreMediums();
-	// genreMediumResponse.map((obj) => {
-	//   genreMediumDict[obj.id] = obj.name;
-	// });
+
 
 	// Hardcoded list of non-text based genre-medium IDs
 	const nonTextGenres = [
@@ -101,11 +96,16 @@ function htmlParser(htmlString, htmlExcerpt) {
 	};
 }
 
-/* Create storyObject from raw WP story response. */
+/* Create storyObject from raw WP story response. For loop to use offset parameters to avoid JSON errors */
 async function createStoryObjects() {
-	const unfilteredStoryObjects = await getAllStories();
-	const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
-	return filteredStoryObjects;
+	let returnObject = [];
+	for(let i = 100; i < 201; i+= 10 ){
+		const unfilteredStoryObjects = await getAllStories(i);
+		const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
+		returnObject = returnObject.concat(filteredStoryObjects);
+	}
+	console.log("testing array length:", returnObject.length);
+	return returnObject;
 }
 
 /* Fetch authorObject and authorID from WP author endpoints. */
@@ -144,5 +144,6 @@ async function getAuthor(storyObject) {
 		};
 	}
 }
+createStoryObjects();
 
 export { createStoryObjects, getAuthor, getFeaturedMedia, htmlParser };
