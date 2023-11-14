@@ -10,6 +10,7 @@ async function insertAllStoryData() {
 	let storyObjects;
 	try {
 		storyObjects = await createStoryObjects();
+		console.log("TESTING STORYOBJECT LENGTH:", storyObjects.length)
 	} catch (error) {
 		console.log(`Unable to get all stories: ${error}`);
 		return;
