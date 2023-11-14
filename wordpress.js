@@ -94,7 +94,7 @@ function htmlParser(htmlString, htmlExcerpt) {
 	const contentProcess = process ? decode(process[1]) : "";
 	const contentExcerpt = excerpt ? decode(excerpt[1]) : "";
 
-	return {
+  return {
 		story: contentStory,
 		process: contentProcess,
 		excerpt: contentExcerpt,
