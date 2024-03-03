@@ -12,7 +12,7 @@ const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
 const coauthorsRoute = "https://girlswritenow.org/wp-json/wp/v2/coauthors/";
 const authorBioRoute =
   "https://girlswritenow.org/wp-json/elm/v1/guest-authors/";
-const manuallyChecked = ["She&#8217;s a 7.8", "Skinny Girl Memoir", "A Foreshadowed Understanding", "My Love Was Bound in Red Silk / I Contain a Silence", , "Pull The Pin and Release the Locking Mechanism"]
+const manuallyChecked = ["She&#8217;s a 7.8", "Skinny Girl Memoir", "A Foreshadowed Understanding", "My Love Was Bound in Red Silk / I Contain a Silence", , "Pull The Pin and Release the Locking Mechanism", "Love&#8217;s Sacrifice", "House of Lies"]
 
 const gwnEmail = process.env.GWN_USERNAME;
 const gwnPassword = process.env.GWN_PASSWORD;
