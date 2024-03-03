@@ -12,6 +12,7 @@ const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
 const coauthorsRoute = "https://girlswritenow.org/wp-json/wp/v2/coauthors/";
 const authorBioRoute =
   "https://girlswritenow.org/wp-json/elm/v1/guest-authors/";
+const manuallyChecked = ["She&#8217;s a 7.8", "Skinny Girl Memoir", "A Foreshadowed Understanding", "My Love Was Bound in Red Silk / I Contain a Silence", , "Pull The Pin and Release the Locking Mechanism"]
 
 const gwnEmail = process.env.GWN_USERNAME;
 const gwnPassword = process.env.GWN_PASSWORD;
@@ -90,7 +91,7 @@ const getFeaturedMedia = async (featuredmediaId) => {
 function parseNewStory(htmlString, htmlExcerpt) {
   const $ = cheerio.load(htmlString);
   const excerpt = cheerio.load(htmlExcerpt);
-  const queryStory = "div.content-column pre, p:not(.social-sharing__text):not(.breadcrumb__content):not(.author-details__author-bio)"
+  const queryStory = "div.content-column pre, p:not(.social-sharing__text):not(.breadcrumb__content):not(.author-details__author-bio):not(blockquote > p), blockquote"
   const queryProcessHeader = `:header:contains("Process")`
   const queryProcess = "p"
   const queryExcerpt = "h2.wp-block-heading"
@@ -101,7 +102,7 @@ function parseNewStory(htmlString, htmlExcerpt) {
   return {
     genre_medium,
     topic,
-    story: $(queryStory).toArray().map((v) => $(v).prop('outerHTML')) || "Not found",
+    story: $(queryStory).not(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
     process: $(queryProcessHeader).next(queryProcess).prop('outerHTML') || "Not found",
     excerpt: excerpt(":header,p").prop('outerHTML') || $(queryExcerpt).prop('outerHTML') || "Not found"
   }
@@ -115,7 +116,7 @@ function parseOldStory(htmlString, htmlExcerpt) {
   const queryProcess = "p"
 
   return {
-    story: $(`h4, h5, h6, p`).toArray().map((v) => $(v).prop('outerHTML')) || "Not found",
+    story: $(`h4, h5, h6, p`).not(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
     process: $(queryProcessHeader).next(queryProcess).prop('outerHTML') || "", // Many old stories don't have a process
     excerpt: excerpt(":header,p").prop('outerHTML') || "Not found"
   }
@@ -138,7 +139,7 @@ function regexParseStory(htmlString, htmlExcerpt) {
   return {
     story: contentStory,
     process: contentProcess,
-    excerpt: contentExcerpt,
+    excerpt: contentExcerpt.replace(" /", ""),
     valid: false,
   };
 
@@ -161,6 +162,11 @@ function htmlParser(htmlString, htmlExcerpt, title, link) {
   }
 
   const old = regexParseStory(htmlString, htmlExcerpt)
+  if (manuallyChecked.includes(title)) {
+    console.log(`"${title}" passed (manually checked, ${link})`)
+    old.valid = true
+    return old;
+  }
 
   if (jquery.process == "Not found" || jquery.story == "Not found" || jquery.excerpt == "Not found") {
     console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
@@ -170,10 +176,10 @@ function htmlParser(htmlString, htmlExcerpt, title, link) {
     // console.log(`new: ${JSON.stringify(jquery)}`)
   }
   else if (old.process != jquery.process || old.excerpt != jquery.excerpt) {
-    console.error(`Story "${title}" is inconsistent`)
+    console.error(`Story "${title}" is inconsistent (${link})`)
     old.valid = false
-    // console.log(`old: ${JSON.stringify({ ...old, story: "" })}`)
-    // console.log(`new: ${JSON.stringify({ ...jquery, story: "" })}`)
+    console.log(`old: ${JSON.stringify(old, null, 4)}`)
+    console.log(`new: ${JSON.stringify(jquery, null, 4)}`)
   } else {
     console.log(`"${title}" passed`)
     old.valid = true
@@ -189,9 +195,9 @@ async function createStoryObjects() {
   let returnObject = [];
   let offsets = []
 
-  let startOffset = 0
-  let maxOffset = 300
-  for (let i = startOffset; i < maxOffset; i += 10) {
+  let startOffset = 50
+  let maxOffset = 100
+  for (let i = startOffset; i <= maxOffset; i += 10) {
     offsets.push(i);
     const unfilteredStoryObjects = await getAllStories(i);
     const filteredStoryObjects = await filterStories(unfilteredStoryObjects);

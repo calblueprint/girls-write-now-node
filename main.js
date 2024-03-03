@@ -28,7 +28,7 @@ async function insertAllStoryData() {
 
     // console.log(obj);
   });
-  console.log(`Total Valid: ${totalValid}, Total Stories: ${storyObjects.length}, Percent Passed: ${totalValid / storyObjects.length}`)
+  console.log(`Total Valid: ${totalValid}, Total Stories: ${storyObjects.length}, Percent Passed: ${totalValid / storyObjects.length * 100}`)
 }
 
 insertAllStoryData();
