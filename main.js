@@ -12,23 +12,23 @@ async function insertAllStoryData() {
   storyObjects = await createStoryObjects();
   console.log("TESTING STORYOBJECT LENGTH:", storyObjects.length)
   storyObjects.forEach(async (obj) => {
-    // await insertStories(obj);
-    // await insertStoriesTags(obj);
+    await insertStories(obj);
+    await insertStoriesTags(obj);
     // await insertCollectionsStories(obj);
-    // await insertAuthors(obj);
-    const htmlParsedObject = htmlParser(
-      obj.content.rendered,
-      obj.excerpt.rendered,
-      obj.title.rendered,
-      obj.link
-    );
-    if (htmlParsedObject.valid) {
-      totalValid++;
-    }
+    await insertAuthors(obj);
+    // const htmlParsedObject = htmlParser(
+    //   obj.content.rendered,
+    //   obj.excerpt.rendered,
+    //   obj.title.rendered,
+    //   obj.link
+    // );
+    // if (htmlParsedObject.valid) {
+    //   totalValid++;
+    // }
 
     // console.log(obj);
   });
-  console.log(`Total Valid: ${totalValid}, Total Stories: ${storyObjects.length}, Percent Passed: ${totalValid / storyObjects.length * 100}`)
+  console.log(`Total Valid: ${totalValid}, Total Stories: ${storyObjects.length}, Percent Passed: ${totalValid / storyObjects.length * 100}%`)
 }
 
 insertAllStoryData();

@@ -2,7 +2,6 @@ import { decode } from "html-entities";
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import fs from 'fs';
-import { log } from "console";
 
 const allStoriesRoute =
   "https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10";
@@ -12,7 +11,7 @@ const mediaRoute = "https://girlswritenow.org/wp-json/wp/v2/media/";
 const coauthorsRoute = "https://girlswritenow.org/wp-json/wp/v2/coauthors/";
 const authorBioRoute =
   "https://girlswritenow.org/wp-json/elm/v1/guest-authors/";
-const manuallyChecked = ["She&#8217;s a 7.8", "Skinny Girl Memoir", "A Foreshadowed Understanding", "My Love Was Bound in Red Silk / I Contain a Silence", , "Pull The Pin and Release the Locking Mechanism", "Love&#8217;s Sacrifice", "House of Lies"]
+const manuallyChecked = ["She&#8217;s a 7.8", "Skinny Girl Memoir", "A Foreshadowed Understanding", "My Love Was Bound in Red Silk / I Contain a Silence", , "Pull The Pin and Release the Locking Mechanism", "Love&#8217;s Sacrifice", "House of Lies", "Some Sundays", "your little world, here", "The Terror of Obesity", "From the Ancient Diary of an Unwilling Globetrotter", "The Restaurant", "Punctures of Light in the Darkness", "The Patient Daughter", "the ‘filler’", "Frostbites", "Motherhood Mural", "Pink", "Pocket of Peace", "Oma&#8217;s Hands", "Welcome To The Neighborhood", "The Rise of Fame, The Fall of Family", "How will they tell me you are dead?", "The Postcard Monologues", "Kill Them with Laughter, Kill Me with Peanuts", "The Scientist and the Fawn", "Mom Pants", "Here and There", "Static", "My Names", "Crown of Thorns", "Young Bones", "Love as Fragile as Time", "NYC Mayor&#8217;s Office Cover Letter", "Glasshouse Fever Dream", "crumbs"]
 
 const gwnEmail = process.env.GWN_USERNAME;
 const gwnPassword = process.env.GWN_PASSWORD;
@@ -24,7 +23,6 @@ headers.set(
 
 /* Fetch all story objects from WP story endpoint. */
 const getAllStories = async (offsetParam) => {
-  // TODO add back orderby=date
   const response = await fetch(`https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10&offset=${offsetParam}&orderby=date&order=desc`);
   let responseJson;
   try {
@@ -82,16 +80,23 @@ const filterStories = async (storyObjects) => {
 /* Fetch featured media link for each story. */
 const getFeaturedMedia = async (featuredmediaId) => {
   const featuredMediaLink = mediaRoute + `${featuredmediaId}`;
-  const response = await fetch(featuredMediaLink);
-  const responseJson = await response.json();
-  return responseJson.link;
+  const response = await fetch(featuredMediaLink, { 'User-Agent': 'girlswritenow-mobile' });
+  let responseText = await response.text();
+  let json;
+  try {
+    json = JSON.parse(responseText);
+  } catch (error) {
+    console.log(responseText)
+    throw error
+  }
+  return json.link;
 };
 
 /* Parse storyObject content into Heading, Story, Process, and Excerpt. */
 function parseNewStory(htmlString, htmlExcerpt) {
   const $ = cheerio.load(htmlString);
   const excerpt = cheerio.load(htmlExcerpt);
-  const queryStory = "div.content-column pre, p:not(.social-sharing__text):not(.breadcrumb__content):not(.author-details__author-bio):not(blockquote > p), blockquote"
+  const queryStory = "div.content-column pre, p:not(.social-sharing__text):not(.breadcrumb__content):not(.author-details__author-bio):not(blockquote > p), blockquote, li:not(.social-sharing__icon), pre.wp-block-verse, div.wp-block-embed__wrapper iframe, .wp-block-audio audio, .wp-block-video video, .wp-block-image img"
   const queryProcessHeader = `:header:contains("Process")`
   const queryProcess = "p"
   const queryExcerpt = "h2.wp-block-heading"
@@ -103,7 +108,7 @@ function parseNewStory(htmlString, htmlExcerpt) {
     genre_medium,
     topic,
     story: $(queryStory).not(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
-    process: $(queryProcessHeader).next(queryProcess).prop('outerHTML') || "Not found",
+    process: $(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
     excerpt: excerpt(":header,p").prop('outerHTML') || $(queryExcerpt).prop('outerHTML') || "Not found"
   }
 }
@@ -112,11 +117,12 @@ function parseOldStory(htmlString, htmlExcerpt) {
   let rootedHtml = htmlString
   const $ = cheerio.load(rootedHtml);
   const excerpt = cheerio.load(htmlExcerpt ?? "")
+  const queryStory = `h4, h5, h6, p, li, pre.wp-block-verse, iframe, .wp-block-audio audio, .wp-block-video video, .wp-block-image img`
   const queryProcessHeader = `:header:contains("Process")`
   const queryProcess = "p"
 
   return {
-    story: $(`h4, h5, h6, p`).not(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
+    story: $(queryStory).not(`${queryProcessHeader} ~ ${queryProcess}`).toArray().map((v) => $(v).prop('outerHTML')).join("") || "Not found",
     process: $(queryProcessHeader).next(queryProcess).prop('outerHTML') || "", // Many old stories don't have a process
     excerpt: excerpt(":header,p").prop('outerHTML') || "Not found"
   }
@@ -157,9 +163,7 @@ function htmlParser(htmlString, htmlExcerpt, title, link) {
     jquery = parseNewStory(htmlString, htmlExcerpt)
   }
 
-  if (title == "Conversations") {
-    fs.writeFileSync('/Users/adityapawar_1/Documents/school/college/blueprint/girls-write-now-node/conversations.html', htmlString)
-  }
+  // fs.writeFileSync('/Users/adityapawar_1/Documents/school/college/blueprint/girls-write-now-node/conversations.html', htmlString)
 
   const old = regexParseStory(htmlString, htmlExcerpt)
   if (manuallyChecked.includes(title)) {
@@ -168,26 +172,25 @@ function htmlParser(htmlString, htmlExcerpt, title, link) {
     return old;
   }
 
-  if (jquery.process == "Not found" || jquery.story == "Not found" || jquery.excerpt == "Not found") {
+  if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
     console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
     console.log(jquery)
     old.valid = false
-    // console.log(`old: ${JSON.stringify(old)}`)
-    // console.log(`new: ${JSON.stringify(jquery)}`)
   }
-  else if (old.process != jquery.process || old.excerpt != jquery.excerpt) {
-    console.error(`Story "${title}" is inconsistent (${link})`)
-    old.valid = false
-    console.log(`old: ${JSON.stringify(old, null, 4)}`)
-    console.log(`new: ${JSON.stringify(jquery, null, 4)}`)
-  } else {
+  // else if (old.process != jquery.process || old.excerpt != jquery.excerpt) {
+  //   console.error(`Story "${title}" is inconsistent (${link})`)
+  //   old.valid = false
+  //   // console.log(`old: ${JSON.stringify(old, null, 4)}`)
+  //   console.log(`new: ${JSON.stringify(jquery, null, 4)}`)
+  //   }
+  else {
     console.log(`"${title}" passed`)
     old.valid = true
     // console.log(`Genre: ${genre_medium}, tone: ${tone}, topic: ${topic}`)
     // console.log(`Story: ${jquery.story}`)
   }
 
-  return old;
+  return jquery;
 }
 
 /* Create storyObject from raw WP story response. For loop to use offset parameters to avoid JSON errors */
@@ -195,13 +198,14 @@ async function createStoryObjects() {
   let returnObject = [];
   let offsets = []
 
-  let startOffset = 50
-  let maxOffset = 100
-  for (let i = startOffset; i <= maxOffset; i += 10) {
+  let startOffset = 0
+  let endOffset = 9
+  for (let i = startOffset; i <= endOffset; i += 10) {
     offsets.push(i);
-    const unfilteredStoryObjects = await getAllStories(i);
-    const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
-    returnObject = returnObject.concat(filteredStoryObjects);
+    let storyObjects = await getAllStories(i);
+    // storyObjects = await filterStories(storyObjects);
+    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+    returnObject = returnObject.concat(storyObjects);
   }
 
   // await Promise.all(offsets.map(async (i) => {
