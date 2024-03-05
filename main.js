@@ -13,9 +13,9 @@ async function insertAllStoryData() {
   console.log("TESTING STORYOBJECT LENGTH:", storyObjects.length)
   storyObjects.forEach(async (obj) => {
     await insertStories(obj);
-    await insertStoriesTags(obj);
+    // await insertStoriesTags(obj);
     // await insertCollectionsStories(obj);
-    await insertAuthors(obj);
+    // await insertAuthors(obj);
     // const htmlParsedObject = htmlParser(
     //   obj.content.rendered,
     //   obj.excerpt.rendered,

@@ -42,6 +42,8 @@ const getAllStories = async (offsetParam) => {
 /* Fetch all genre-medium IDs from WP genreMedium endpoint. */
 const getAllGenreMediums = async () => {
   const response = await fetch(genreMediumRoute);
+  await new Promise(r => setTimeout(r, 1000)); // servers are bad
+
   const responseJson = await response.json();
   return responseJson;
 };
@@ -81,6 +83,8 @@ const filterStories = async (storyObjects) => {
 const getFeaturedMedia = async (featuredmediaId) => {
   const featuredMediaLink = mediaRoute + `${featuredmediaId}`;
   const response = await fetch(featuredMediaLink, { 'User-Agent': 'girlswritenow-mobile' });
+  await new Promise(r => setTimeout(r, 1000)); // servers are bad
+
   let responseText = await response.text();
   let json;
   try {
@@ -151,7 +155,13 @@ function regexParseStory(htmlString, htmlExcerpt) {
 
 }
 
-function htmlParser(htmlString, htmlExcerpt, title, link) {
+function getFeaturedMediaFromYoast(yoastHead) {
+  // meta property =\"og:image\"
+  const $ = cheerio.load(yoastHead)
+  return $(`meta[property="og:image"]`).prop("content")
+}
+
+function htmlParser(htmlString, htmlExcerpt, title, yoastHead, link) {
   const $ = cheerio.load(htmlString);
   const isOldStory = $('div.story-post-title').text().trim().length == 0
 
@@ -162,32 +172,20 @@ function htmlParser(htmlString, htmlExcerpt, title, link) {
   } else {
     jquery = parseNewStory(htmlString, htmlExcerpt)
   }
+  jquery["featuredMediaLink"] = getFeaturedMediaFromYoast(yoastHead)
 
   // fs.writeFileSync('/Users/adityapawar_1/Documents/school/college/blueprint/girls-write-now-node/conversations.html', htmlString)
 
-  const old = regexParseStory(htmlString, htmlExcerpt)
+  // const old = regexParseStory(htmlString, htmlExcerpt)
   if (manuallyChecked.includes(title)) {
     console.log(`"${title}" passed (manually checked, ${link})`)
-    old.valid = true
-    return old;
   }
-
-  if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
+  else if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
     console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
     console.log(jquery)
-    old.valid = false
   }
-  // else if (old.process != jquery.process || old.excerpt != jquery.excerpt) {
-  //   console.error(`Story "${title}" is inconsistent (${link})`)
-  //   old.valid = false
-  //   // console.log(`old: ${JSON.stringify(old, null, 4)}`)
-  //   console.log(`new: ${JSON.stringify(jquery, null, 4)}`)
-  //   }
   else {
     console.log(`"${title}" passed`)
-    old.valid = true
-    // console.log(`Genre: ${genre_medium}, tone: ${tone}, topic: ${topic}`)
-    // console.log(`Story: ${jquery.story}`)
   }
 
   return jquery;
@@ -199,8 +197,8 @@ async function createStoryObjects() {
   let offsets = []
 
   let startOffset = 0
-  let endOffset = 9
-  for (let i = startOffset; i <= endOffset; i += 10) {
+  let endOffset = 100
+  for (let i = startOffset; i < endOffset; i += 10) {
     offsets.push(i);
     let storyObjects = await getAllStories(i);
     // storyObjects = await filterStories(storyObjects);
@@ -228,6 +226,8 @@ async function getAuthor(storyObject) {
       method: "GET",
       headers: headers,
     });
+    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+
     const responseJson = await coauthorResponse.json();
     const authorId = re.exec(responseJson.description)[0];
     const authorBioEndpoint = authorBioRoute + `${authorId}`;
@@ -235,10 +235,14 @@ async function getAuthor(storyObject) {
       method: "GET",
       headers: headers,
     });
+    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+
     const authorBioResponseJson = await authorBioResponse.json();
     const thumbnailResponse = await fetch(
       mediaRoute + `${authorBioResponseJson.metadata._thumbnail_id[0]}`
     );
+    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+
     const thumbnailResponseJson = await thumbnailResponse.json();
     const thumbnailJpeg = thumbnailResponseJson.guid.rendered;
     return {

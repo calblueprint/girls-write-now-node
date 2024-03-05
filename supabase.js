@@ -14,12 +14,17 @@ async function insertStories(storyObject) {
       storyObject.content.rendered,
       storyObject.excerpt.rendered,
       storyObject.title.rendered,
+      storyObject.yoast_head,
       storyObject.link
     );
-    console.log("HTML PARSED OBJECT:", htmlParsedObject)
-    const featuredMediaLink = await getFeaturedMedia(
-      storyObject.featured_media
-    );
+    // console.log("HTML PARSED OBJECT:", htmlParsedObject)
+    // const featuredMediaLink = await getFeaturedMedia(
+    //   storyObject.featured_media
+    // );
+    const featuredMediaLink = htmlParsedObject.featuredMediaLink
+    console.log(featuredMediaLink)
+    throw TypeError();
+
     const { error } = await supabase.from("stories").upsert([
       {
         id: storyObject.id,
@@ -37,7 +42,7 @@ async function insertStories(storyObject) {
         `Unable to push story ${storyObject.id} to Supabase: ${error.code}`
       );
     } else {
-      console.log(`Inserted story ${storyObject.id} to Supabase`);
+      console.log(`Inserted story ${storyObject.id} (${storyObject.title.rendered}) to Supabase`);
     }
   } catch (error) {
     console.log(`Unable to parse story content: ${error}`);
