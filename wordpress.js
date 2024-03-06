@@ -197,7 +197,7 @@ async function createStoryObjects() {
   let offsets = []
 
   let startOffset = 0
-  let endOffset = 100
+  let endOffset = 1250
   for (let i = startOffset; i < endOffset; i += 10) {
     offsets.push(i);
     let storyObjects = await getAllStories(i);

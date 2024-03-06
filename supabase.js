@@ -23,7 +23,6 @@ async function insertStories(storyObject) {
     // );
     const featuredMediaLink = htmlParsedObject.featuredMediaLink
     console.log(featuredMediaLink)
-    throw TypeError();
 
     const { error } = await supabase.from("stories").upsert([
       {
