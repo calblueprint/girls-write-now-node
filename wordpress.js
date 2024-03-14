@@ -1,8 +1,10 @@
 import { decode } from "html-entities";
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
-import cliProgress from "cli-progress"
-import fs from 'fs';
+import pkg from 'bluebird';
+const { Promise } = pkg;
+import cliProgress from 'cli-progress'
+import colors from 'ansi-colors';
 
 const allStoriesRoute =
   "https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10";
@@ -31,13 +33,9 @@ const getAllStories = async (offsetParam) => {
   } catch (error) {
     console.log(`Error on offset: ${offsetParam}, Error: ${error}`)
     console.log(`https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10&offset=${offsetParam}&orderby=date&order=desc`)
-
-    // console.log(`Retrying offsetParam: ${offsetParam}`)
-    // return await getAllStories(offsetParam);
     return [];
   }
-  // console.log(`Fetched data for offsetParam: ${offsetParam}, Stories: ${responseJson.length}`)
-
+  // console.log(`Fetched data for offset param: ${offsetParam}`)
   return responseJson;
 };
 
@@ -170,7 +168,6 @@ function regexParseStory(htmlString, htmlExcerpt) {
 }
 
 function getFeaturedMediaFromYoast(yoastHead) {
-  // meta property =\"og:image\"
   const $ = cheerio.load(yoastHead)
   return $(`meta[property="og:image"]`).prop("content")
 }
@@ -188,43 +185,31 @@ function htmlParser(htmlString, htmlExcerpt, title, yoastHead, link) {
   }
   jquery["featuredMediaLink"] = getFeaturedMediaFromYoast(yoastHead)
 
-  // fs.writeFileSync('/Users/adityapawar_1/Documents/school/college/blueprint/girls-write-now-node/conversations.html', htmlString)
-
-  // const old = regexParseStory(htmlString, htmlExcerpt)
-  // if (manuallyChecked.includes(title)) {
-  //   console.log(`"${title}" passed (manually checked, ${link})`)
-  // }
-  // else if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
-  //   console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
-  //   console.log(jquery)
-  // }
-  // else {
-  //   console.log(`"${title}" passed`)
-  // }
-
   return jquery;
 }
 
 /* Create storyObject from raw WP story response. For loop to use offset parameters to avoid JSON errors */
-async function* createStoryObjects(startOffset, endOffset) {
-  // let returnObject = [];
-  let offsets = []
+function createStoryObjects(startOffset, endOffset) {
+  let offsets = [];
 
-  const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-  bar.start(endOffset - startOffset, 0)
   for (let i = startOffset; i < endOffset; i += 10) {
-    offsets.push(i);
-
-    let responseJson = await getAllStories(i);
-    let storyObjects = await getFeaturedMediaForListOfStories(responseJson);
-    await new Promise(r => setTimeout(r, 1000)); // servers are bad
-    // returnObject = returnObject.concat(storyObjects);
-    for (const obj of storyObjects) {
-      yield obj;
-      bar.increment()
-    }
+    offsets.push(i)
   }
-  bar.stop()
+
+  const bar = new cliProgress.SingleBar({
+    format: "|" + colors.green('{bar}') + '| {percentage}% || ETA: {eta}s || {value}/{total} requests || Fetching Data (offset: {offset})',
+  }, cliProgress.Presets.shades_classic);
+  bar.start((endOffset - startOffset) / 10, 0);
+  bar.update(bar.getProgress(), { offset: "N/A" })
+
+  return Promise.map(offsets, async (i) => {
+    bar.update({ offset: i })
+    let responseJson = await getAllStories(i);
+    const stories = await getFeaturedMediaForListOfStories(responseJson);
+
+    bar.increment();
+    return stories;
+  }, { concurrency: 2 })
 }
 
 /* Fetch authorObject and authorID from WP author endpoints. */

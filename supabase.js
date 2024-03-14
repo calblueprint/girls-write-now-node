@@ -101,10 +101,6 @@ async function insertAuthors(storyObject) {
 }
 
 async function insertStoriesAuthors(storyID, authorID, coAuthorIds) {
-  if (coAuthorIds.length > 0) {
-    console.log(`YOOOO STORY: ${storyID}`);
-  }
-
   const { error } = await supabase.from("stories_authors").upsert({
     story_id: storyID,
     author_id: authorID,
