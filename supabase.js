@@ -96,7 +96,7 @@ async function insertAuthors(storyObject) {
     }
   }
 
-  await insertStoriesAuthors(storyObject.id, authorObjects[0].id, authorObjects.slice(1).map(author => author.id));
+  await insertStoriesAuthors(storyObject.id, authorObjects[0].id, authorObjects.slice(1).map(author => parseInt(author.id)));
   // console.log(`Updated Authors for ${storyObject.title.rendered}`)
 }
 

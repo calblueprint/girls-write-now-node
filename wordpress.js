@@ -256,15 +256,23 @@ async function getAuthor(storyObject) {
     await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     const authorBioResponseJson = await authorBioResponse.json();
-    const thumbnailId = authorBioResponseJson.metadata._thumbnail_id[0];
-    const thumbnailJpeg = `https://girlswritenow.org/?attachment_id=${thumbnailId}`
+
+    let thumbnailId = "";
+    let thumbnailJpeg = "https://girlswritenow.org/?attachment_id="
+    if (authorBioResponseJson.metadata._thumbnail_id) {
+      thumbnailId = authorBioResponseJson.metadata._thumbnail_id[0];
+      thumbnailJpeg = `https://girlswritenow.org/?attachment_id=${thumbnailId}`
+    } else {
+      console.log(`\nStory ${storyObject.title.rendered} does not have an author image`)
+    }
+
     // const thumbnailResponse = await fetch(
     //   mediaRoute + `${authorBioResponseJson.metadata._thumbnail_id[0]}`
     // );
-    // await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     // const thumbnailResponseJson = await thumbnailResponse.json();
     // const thumbnailJpeg = thumbnailResponseJson.link;
+
     returnObject.push({
       id: coauthor,
       name: authorBioResponseJson.post_title,
@@ -273,8 +281,8 @@ async function getAuthor(storyObject) {
           ? authorBioResponseJson.metadata.pronouns[0]
           : ""
         : "",
-      bio: authorBioResponseJson.metadata["cap-description"][0],
-      artist_statement: authorBioResponseJson.metadata.artist_statement[0],
+      bio: (authorBioResponseJson.metadata["cap-description"] ?? []).length > 0 ? authorBioResponseJson.metadata["cap-description"][0] : "",
+      artist_statement: (authorBioResponseJson.metadata.artist_statement ?? []).length > 0 ? authorBioResponseJson.metadata.artist_statement[0] : "",
       thumbnail: thumbnailJpeg,
     });
   }

@@ -9,14 +9,14 @@ import cliProgress from 'cli-progress'
 import colors from 'ansi-colors';
 
 const bar = new cliProgress.SingleBar({
-  format: 'Port Progress |' + colors.cyan('{bar}') + '| {percentage}% || ETA: {eta}s || Progress: {value}/{total} || Current Story: "{storyTitle}" (segment: {segment})',
+  format: "|" + colors.cyan('{bar}') + '| {percentage}% || ETA: {eta}s || Progress: {value}/{total} || Current Story: "{storyTitle}" (segment: {segment})',
 }, cliProgress.Presets.shades_classic);
 
 async function insertAllStoryData() {
   let totalValid = 0;
 
-  let startStory = 0;
-  let endStory = 200;
+  let startStory = 400;
+  let endStory = 1250;
   let currentIndex = 0
   let storyObjects = createStoryObjects(startStory, endStory);
 
@@ -30,30 +30,33 @@ async function insertAllStoryData() {
       bar.update(currentIndex, { storyTitle: obj.title.rendered, segment: "Inserting Content" })
       await insertStories(obj);
     } catch (error) {
-      console.log(`Error on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Content"`)
+      console.log(`\nError on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Content"`)
       console.log(`Error:`)
       console.log(error)
-      logStream.write(obj.id);
+      logStream.write(obj.id.toString());
+      logStream.write("\n");
     }
 
     try {
       bar.update(currentIndex, { storyTitle: obj.title.rendered, segment: "Inserting Tags" })
       await insertStoriesTags(obj);
     } catch (error) {
-      console.log(`Error on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Tags"`)
+      console.log(`\nError on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Tags"`)
       console.log(`Error:`)
       console.log(error)
-      logStream.write(obj.id);
+      logStream.write(obj.id.toString());
+      logStream.write("\n");
     }
 
     try {
       bar.update(currentIndex, { storyTitle: obj.title.rendered, segment: "Inserting Authors" })
       await insertAuthors(obj);
     } catch (error) {
-      console.log(`Error on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Authors"`)
+      console.log(`\nError on story "${obj.title.rendered}" (id: ${obj.id}, link: ${obj.link}) for segment "Inserting Authors"`)
       console.log(`Error:`)
       console.log(error)
-      logStream.write(obj.id);
+      logStream.write(obj.id.toString());
+      logStream.write("\n");
     }
 
     currentIndex++;
