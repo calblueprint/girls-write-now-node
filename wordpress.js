@@ -1,6 +1,7 @@
 import { decode } from "html-entities";
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
+import cliProgress from "cli-progress"
 import fs from 'fs';
 
 const allStoriesRoute =
@@ -35,7 +36,8 @@ const getAllStories = async (offsetParam) => {
     // return await getAllStories(offsetParam);
     return [];
   }
-  console.log(`Fetched data for offsetParam: ${offsetParam}, Stories: ${responseJson.length}`)
+  // console.log(`Fetched data for offsetParam: ${offsetParam}, Stories: ${responseJson.length}`)
+
   return responseJson;
 };
 
@@ -79,20 +81,32 @@ const filterStories = async (storyObjects) => {
   return filteredData;
 };
 
+const getFeaturedMediaForListOfStories = async (responseJson) => {
+  let stories = [];
+  for (let i = 0; i < responseJson.length; i++) {
+    let thisStory = responseJson[i];
+    try {
+      let featuredMediaLink = await getFeaturedMedia(thisStory.featured_media);
+      stories.push({ ...thisStory, featuredMediaLink })
+    } catch {
+      console.log(`Could not get media for ${thisStory.title.rendered}`);
+    } finally {
+    }
+  }
+
+  // console.log(`Got media for ${stories.length} stories`)
+  return stories;
+};
+
+
 /* Fetch featured media link for each story. */
 const getFeaturedMedia = async (featuredmediaId) => {
   const featuredMediaLink = mediaRoute + `${featuredmediaId}`;
   const response = await fetch(featuredMediaLink, { 'User-Agent': 'girlswritenow-mobile' });
-  await new Promise(r => setTimeout(r, 1000)); // servers are bad
+  await new Promise(r => setTimeout(r, 500)); // servers are bad
 
   let responseText = await response.text();
-  let json;
-  try {
-    json = JSON.parse(responseText);
-  } catch (error) {
-    console.log(responseText)
-    throw error
-  }
+  let json = JSON.parse(responseText);
   return json.link;
 };
 
@@ -196,16 +210,23 @@ async function createStoryObjects() {
   let returnObject = [];
   let offsets = []
 
-  let startOffset = 0
-  let endOffset = 1250
+  let startOffset = 200
+  let endOffset = 210
+  const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+  bar.start(endOffset - startOffset, 0)
   for (let i = startOffset; i < endOffset; i += 10) {
     offsets.push(i);
-    let storyObjects = await getAllStories(i);
-    // storyObjects = await filterStories(storyObjects);
+
+    let responseJson = await getAllStories(i);
+    let storyObjects = await getFeaturedMediaForListOfStories(responseJson);
     await new Promise(r => setTimeout(r, 1000)); // servers are bad
     returnObject = returnObject.concat(storyObjects);
-  }
 
+    bar.update(i - startOffset + 11)
+  }
+  bar.stop()
+
+  // Send all requests async (kills the server) (dont do this)
   // await Promise.all(offsets.map(async (i) => {
   //   const unfilteredStoryObjects = await getAllStories(i);
   //   const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
@@ -220,13 +241,14 @@ async function createStoryObjects() {
 /* Fetch authorObject and authorID from WP author endpoints. */
 async function getAuthor(storyObject) {
   const re = /\d+/; // Regex to extract integers from string
+  let returnObject = []
   for (const coauthor of storyObject.coauthors) {
     const coauthorsEndpoint = coauthorsRoute + `${coauthor}`;
     const coauthorResponse = await fetch(coauthorsEndpoint, {
       method: "GET",
       headers: headers,
     });
-    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+    await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     const responseJson = await coauthorResponse.json();
     const authorId = re.exec(responseJson.description)[0];
@@ -235,17 +257,17 @@ async function getAuthor(storyObject) {
       method: "GET",
       headers: headers,
     });
-    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+    await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     const authorBioResponseJson = await authorBioResponse.json();
     const thumbnailResponse = await fetch(
       mediaRoute + `${authorBioResponseJson.metadata._thumbnail_id[0]}`
     );
-    await new Promise(r => setTimeout(r, 1000)); // servers are bad
+    await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     const thumbnailResponseJson = await thumbnailResponse.json();
     const thumbnailJpeg = thumbnailResponseJson.guid.rendered;
-    return {
+    returnObject.push({
       id: coauthor,
       name: authorBioResponseJson.post_title,
       pronouns: authorBioResponseJson.metadata.pronouns
@@ -256,8 +278,9 @@ async function getAuthor(storyObject) {
       bio: authorBioResponseJson.metadata["cap-description"][0],
       artist_statement: authorBioResponseJson.metadata.artist_statement[0],
       thumbnail: thumbnailJpeg,
-    };
+    });
   }
+  return returnObject;
 }
 
-export { createStoryObjects, getAuthor, getFeaturedMedia, htmlParser };
+export { createStoryObjects, getAuthor, htmlParser };
