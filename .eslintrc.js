@@ -1,3 +1,3 @@
 module.exports = {
-  extends: ['@calblueprint/eslint-config-react'],
+  extends: ["@calblueprint/eslint-config-react"],
 };

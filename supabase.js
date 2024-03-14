@@ -21,7 +21,7 @@ async function insertStories(storyObject) {
   // const featuredMediaLink = await getFeaturedMedia(
   //   storyObject.featured_media
   // );
-  const featuredMediaLink = storyObject.featuredMediaLink
+  const featuredMediaLink = storyObject.featuredMediaLink;
 
   const { error } = await supabase.from("stories").upsert([
     {
@@ -68,7 +68,9 @@ async function insertCollectionsStories(storyObject) {
       .upsert([{ story_id: storyObject.id, collection_id: id }]);
     if (error) {
       console.log(
-        `Unable to insert story ${storyObject.id} to collection ${id}: ${JSON.stringify(error)}`
+        `Unable to insert story ${
+          storyObject.id
+        } to collection ${id}: ${JSON.stringify(error)}`
       );
     }
   }
@@ -88,7 +90,9 @@ async function insertAuthors(storyObject) {
         image: authorObject.thumbnail,
       });
       if (error) {
-        console.log(`Unable to insert author ${authorObject.id}: ${error.code}`);
+        console.log(
+          `Unable to insert author ${authorObject.id}: ${error.code}`
+        );
       }
       // console.log(`Inserted author ${authorObject.id}`);
     } catch (error) {
@@ -96,7 +100,11 @@ async function insertAuthors(storyObject) {
     }
   }
 
-  await insertStoriesAuthors(storyObject.id, authorObjects[0].id, authorObjects.slice(1).map(author => parseInt(author.id)));
+  await insertStoriesAuthors(
+    storyObject.id,
+    authorObjects[0].id,
+    authorObjects.slice(1).map((author) => parseInt(author.id))
+  );
   // console.log(`Updated Authors for ${storyObject.title.rendered}`)
 }
 
@@ -104,7 +112,7 @@ async function insertStoriesAuthors(storyID, authorID, coAuthorIds) {
   const { error } = await supabase.from("stories_authors").upsert({
     story_id: storyID,
     author_id: authorID,
-    coauthor_id: coAuthorIds
+    coauthor_id: coAuthorIds,
   });
   if (error) {
     console.log(
@@ -118,6 +126,5 @@ export {
   insertAuthors,
   insertCollectionsStories,
   insertStories,
-  insertStoriesTags
+  insertStoriesTags,
 };
-
