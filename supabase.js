@@ -58,7 +58,7 @@ async function insertStoriesTags(storyObject) {
       }
     }
   }
-  console.log(`Inserted tags for story ${storyObject.id}`);
+  // console.log(`Inserted tags for story ${storyObject.id}`);
 }
 
 async function insertCollectionsStories(storyObject) {
@@ -68,7 +68,7 @@ async function insertCollectionsStories(storyObject) {
       .upsert([{ story_id: storyObject.id, collection_id: id }]);
     if (error) {
       console.log(
-        `Unable to insert story ${storyObject.id} to collection ${id}: ${error}`
+        `Unable to insert story ${storyObject.id} to collection ${id}: ${JSON.stringify(error)}`
       );
     }
   }
@@ -90,13 +90,14 @@ async function insertAuthors(storyObject) {
       if (error) {
         console.log(`Unable to insert author ${authorObject.id}: ${error.code}`);
       }
-      console.log(`Inserted author ${authorObject.id}`);
+      // console.log(`Inserted author ${authorObject.id}`);
     } catch (error) {
       console.log(`Unable to get author from WP: ${error}`);
     }
   }
 
   await insertStoriesAuthors(storyObject.id, authorObjects[0].id, authorObjects.slice(1).map(author => author.id));
+  // console.log(`Updated Authors for ${storyObject.title.rendered}`)
 }
 
 async function insertStoriesAuthors(storyID, authorID, coAuthorIds) {
@@ -114,7 +115,7 @@ async function insertStoriesAuthors(storyID, authorID, coAuthorIds) {
       `Unable to insert author ${authorID} to story ${storyID}: ${error}`
     );
   }
-  console.log(`Inserted author ${authorID} to story ${storyID}`);
+  // console.log(`Inserted author ${authorID} to story ${storyID}`);
 }
 
 export {

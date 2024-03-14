@@ -29,7 +29,7 @@ const getAllStories = async (offsetParam) => {
   try {
     responseJson = await response.json();
   } catch (error) {
-    console.log(`Error on offset: ${offsetParam}`)
+    console.log(`Error on offset: ${offsetParam}, Error: ${error}`)
     console.log(`https://girlswritenow.org/wp-json/wp/v2/story/?per_page=10&offset=${offsetParam}&orderby=date&order=desc`)
 
     // console.log(`Retrying offsetParam: ${offsetParam}`)
@@ -191,27 +191,25 @@ function htmlParser(htmlString, htmlExcerpt, title, yoastHead, link) {
   // fs.writeFileSync('/Users/adityapawar_1/Documents/school/college/blueprint/girls-write-now-node/conversations.html', htmlString)
 
   // const old = regexParseStory(htmlString, htmlExcerpt)
-  if (manuallyChecked.includes(title)) {
-    console.log(`"${title}" passed (manually checked, ${link})`)
-  }
-  else if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
-    console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
-    console.log(jquery)
-  }
-  else {
-    console.log(`"${title}" passed`)
-  }
+  // if (manuallyChecked.includes(title)) {
+  //   console.log(`"${title}" passed (manually checked, ${link})`)
+  // }
+  // else if (jquery.story == "Not found" || jquery.excerpt == "Not found" || jquery.story == "") {
+  //   console.error(`Story "${title}" could not find one or more entries (${link}, old story?: ${isOldStory})`)
+  //   console.log(jquery)
+  // }
+  // else {
+  //   console.log(`"${title}" passed`)
+  // }
 
   return jquery;
 }
 
 /* Create storyObject from raw WP story response. For loop to use offset parameters to avoid JSON errors */
-async function createStoryObjects() {
-  let returnObject = [];
+async function* createStoryObjects(startOffset, endOffset) {
+  // let returnObject = [];
   let offsets = []
 
-  let startOffset = 200
-  let endOffset = 210
   const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
   bar.start(endOffset - startOffset, 0)
   for (let i = startOffset; i < endOffset; i += 10) {
@@ -220,22 +218,13 @@ async function createStoryObjects() {
     let responseJson = await getAllStories(i);
     let storyObjects = await getFeaturedMediaForListOfStories(responseJson);
     await new Promise(r => setTimeout(r, 1000)); // servers are bad
-    returnObject = returnObject.concat(storyObjects);
-
-    bar.update(i - startOffset + 11)
+    // returnObject = returnObject.concat(storyObjects);
+    for (const obj of storyObjects) {
+      yield obj;
+      bar.increment()
+    }
   }
   bar.stop()
-
-  // Send all requests async (kills the server) (dont do this)
-  // await Promise.all(offsets.map(async (i) => {
-  //   const unfilteredStoryObjects = await getAllStories(i);
-  //   const filteredStoryObjects = await filterStories(unfilteredStoryObjects);
-  //   returnObject = returnObject.concat(filteredStoryObjects);
-  // }))
-
-  // console.log("TESTING STORY OUTPUT:", returnObject[70]);
-  console.log("testing array length:", returnObject.length);
-  return returnObject;
 }
 
 /* Fetch authorObject and authorID from WP author endpoints. */
@@ -250,7 +239,14 @@ async function getAuthor(storyObject) {
     });
     await new Promise(r => setTimeout(r, 250)); // servers are bad
 
-    const responseJson = await coauthorResponse.json();
+    let responseJson;
+    try {
+      responseJson = await coauthorResponse.clone().json();
+    } catch (error) {
+      console.log(`Story ID: ${storyObject.id} (${storyObject.title.rendered}) failed inserting author`)
+      // console.log(await coauthorResponse.clone().text())
+    }
+
     const authorId = re.exec(responseJson.description)[0];
     const authorBioEndpoint = authorBioRoute + `${authorId}`;
     const authorBioResponse = await fetch(authorBioEndpoint, {
@@ -260,13 +256,15 @@ async function getAuthor(storyObject) {
     await new Promise(r => setTimeout(r, 250)); // servers are bad
 
     const authorBioResponseJson = await authorBioResponse.json();
-    const thumbnailResponse = await fetch(
-      mediaRoute + `${authorBioResponseJson.metadata._thumbnail_id[0]}`
-    );
-    await new Promise(r => setTimeout(r, 250)); // servers are bad
+    const thumbnailId = authorBioResponseJson.metadata._thumbnail_id[0];
+    const thumbnailJpeg = `https://girlswritenow.org/?attachment_id=${thumbnailId}`
+    // const thumbnailResponse = await fetch(
+    //   mediaRoute + `${authorBioResponseJson.metadata._thumbnail_id[0]}`
+    // );
+    // await new Promise(r => setTimeout(r, 250)); // servers are bad
 
-    const thumbnailResponseJson = await thumbnailResponse.json();
-    const thumbnailJpeg = thumbnailResponseJson.guid.rendered;
+    // const thumbnailResponseJson = await thumbnailResponse.json();
+    // const thumbnailJpeg = thumbnailResponseJson.link;
     returnObject.push({
       id: coauthor,
       name: authorBioResponseJson.post_title,
